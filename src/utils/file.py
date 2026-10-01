@@ -2,11 +2,17 @@ import argparse
 import json
 import os
 from csv import QUOTE_NONNUMERIC
+from pathlib import Path, PurePath
 from time import localtime, strftime
 
 import pandas as pd
 
 from src.logger import logger
+
+
+def to_csv_str(p) -> str:
+    """Return a POSIX-style (forward-slash) path string for portable CSV/log output."""
+    return p.as_posix() if isinstance(p, PurePath) else Path(p).as_posix()
 
 
 def load_json(path, **rest):
