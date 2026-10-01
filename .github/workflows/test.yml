@@ -39,8 +39,9 @@ jobs:
           uv run pytest --cov-fail-under=70 --junitxml=./.github-pytest/pytest-output.xml | tee .github-pytest/pytest-coverage.txt
         env:
           OMR_CHECKER_CONTAINER: true
-          # Note: TZ override no longer needed as we're now setting it during test execution itself.
-          # TZ: Asia/Kolkata
+          # Snapshot outputs embed the hour from localtime(); the committed
+          # snapshots (e.g. Results_05AM.csv) were generated in Asia/Kolkata.
+          TZ: Asia/Kolkata
 
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@v1
