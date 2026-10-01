@@ -1,8 +1,20 @@
 import os
 import shutil
+import sys
 from glob import glob
 
+import pytest
+
 from src.tests.utils import run_entry_point, setup_mocker_patches
+
+# Committed snapshot keys embed the run-hour (Results_05AM.csv) resolved from
+# localtime(). CPython on Windows ignores the TZ environment variable, so the
+# hour cannot be reproduced deterministically there; these snapshot comparisons
+# therefore run on POSIX CI only. All other patterns still pass on Windows.
+pytestmark = pytest.mark.skipif(
+    sys.platform.startswith("win"),
+    reason="Snapshot keys embed a timezone-resolved hour that is not deterministic on Windows.",
+)
 
 
 def read_file(path):
