@@ -1,14 +1,12 @@
 name: Pre-Commit Hook
 
-on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+on: [push, pull_request]
 
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Kolkata
 
     steps:
       - name: Checkout
@@ -19,5 +17,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Run pre-commit
+      - name: Install dependencies
+        run: pip install -r requirements.dev.txt opencv-python-headless
+
+      - name: Run pre-commit (commit stage)
         uses: pre-commit/action@v3.0.1
+
+      - name: Run pre-commit (push stage)
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --hook-stage push --all-files
