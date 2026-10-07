@@ -41,15 +41,17 @@ jobs:
       - name: Run pytest
         run: |
           set -o pipefail
-          uv run pytest --cov-fail-under=70 --junitxml=./.github-pytest/pytest-output.xml | tee .github-pytest/pytest-coverage.txt
+          uv run pytest --cov=src --cov-report=term --cov-fail-under=70 --junitxml=./.github-pytest/pytest-output.xml | tee .github-pytest/pytest-coverage.txt
         env:
           OMR_CHECKER_CONTAINER: true
           # Snapshot outputs embed the hour from localtime(); the committed
           # snapshots (e.g. Results_05AM.csv) were generated in Asia/Kolkata.
           TZ: Asia/Kolkata
 
+      # Fork PRs get a read-only GITHUB_TOKEN under the pull_request event,
+      # so commenting would fail with "Resource not accessible by integration".
       - name: Pytest coverage comment
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: MishaKav/pytest-coverage-comment@v1
         with:
           pytest-coverage-path: ./.github-pytest/pytest-coverage.txt
@@ -61,8 +63,9 @@ jobs:
         with:
           output: .github-pytest/coverage/coverage.svg
 
+      # Only publish the badge from master - PRs must not overwrite it.
       - name: Publish coverage report to coverage-badge branch
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && github.event_name == 'push'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: coverage-badge
