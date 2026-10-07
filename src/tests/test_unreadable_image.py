@@ -51,6 +51,37 @@ def test_load_omr_image_still_returns_the_image_when_readable(tmp_path):
     assert images[0][1] is not None
 
 
+def _strip_pre_processors(template_content):
+    template_content["preProcessors"] = []
+
+
+def test_all_images_unreadable_still_finishes_the_run(mocker, tmp_path):
+    """A directory where every input is skipped must not crash the summary.
+
+    load_omr_image returns [] for each unreadable file, so process_files
+    never increments its counter. print_stats then computed
+    time_checking / files_counter for the rate lines and raised
+    ZeroDivisionError after the run had otherwise completed cleanly.
+    """
+    setup_mocker_patches(mocker)
+    sample_dir = _build_sample_dir(tmp_path)
+    # CropOnMarkers loads its marker at template construction time, which is
+    # out of scope here - drop it so every image can be made unreadable.
+    write_modified(
+        _strip_pre_processors,
+        TEMPLATE_BOILERPLATE,
+        sample_dir.joinpath("template.json"),
+    )
+    output_dir = tmp_path.joinpath("outputs")
+
+    for file_name in os.listdir(sample_dir):
+        if file_name.lower().endswith((".jpg", ".jpeg", ".png")):
+            with open(sample_dir.joinpath(file_name), "wb") as image_file:
+                image_file.write(b"this is not a decodable image")
+
+    run_entry_point(str(sample_dir), str(output_dir))
+
+
 def test_unreadable_image_does_not_abort_the_run(mocker, tmp_path):
     """
     A single unreadable file must be skipped, not crash the whole run.
