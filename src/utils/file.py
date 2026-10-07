@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 from csv import QUOTE_NONNUMERIC
-from pathlib import Path, PurePath
+from pathlib import PurePath
 from time import localtime, strftime
 
 import pandas as pd
@@ -11,8 +11,17 @@ from src.logger import logger
 
 
 def to_csv_str(p) -> str:
-    """Return a POSIX-style (forward-slash) path string for portable CSV/log output."""
-    return p.as_posix() if isinstance(p, PurePath) else Path(p).as_posix()
+    """Return a POSIX-style (forward-slash) path string for portable CSV/log output.
+
+    Plain strings are handled explicitly instead of being parsed with the host's
+    path rules: on a POSIX host ``Path(r"a\\b").as_posix()`` keeps the backslash,
+    because POSIX only treats ``/`` as a separator. CSV rows and log messages have
+    to be byte-identical across platforms, so backslashes in a string are always
+    treated as separators.
+    """
+    if isinstance(p, PurePath):
+        return p.as_posix()
+    return str(p).replace("\\", "/")
 
 
 def load_json(path, **rest):
