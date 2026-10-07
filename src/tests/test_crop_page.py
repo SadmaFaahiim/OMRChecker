@@ -29,12 +29,22 @@ def test_crop_page_fails_when_page_not_found_by_default():
     assert croppage.apply_filter(image, "test.png") is None
 
 
-def test_crop_page_returns_image_when_skip_requested():
+def test_crop_page_returns_original_image_when_skip_requested():
     croppage = make_croppage(should_fail_if_page_not_found=False)
     image = random_image()
     output = croppage.apply_filter(image, "test.png")
     assert output is not None
-    assert output.shape == image.shape
+    # Downstream preprocessor must receive the exact input pixels, not the
+    # normalized Gaussian-blurred working copy prepared for boundary detection.
+    assert np.array_equal(output, image)
+
+
+def test_crop_page_fallback_does_not_mutate_input():
+    croppage = make_croppage(should_fail_if_page_not_found=False)
+    image = random_image()
+    before = image.copy()
+    croppage.apply_filter(image, "test.png")
+    assert np.array_equal(image, before)
 
 
 def test_should_fail_if_page_not_found_defaults_to_true():
