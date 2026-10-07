@@ -62,8 +62,8 @@ class CropPage(ImagePreprocessor):
         self.morph_kernel = tuple(
             int(x) for x in cropping_ops.get("morphKernel", [10, 10])
         )
-        self.should_fail_if_page_not_found = bool(
-            cropping_ops.get("shouldFailIfPageNotFound", True)
+        self.continue_on_page_not_found = bool(
+            cropping_ops.get("continueOnPageNotFound", False)
         )
 
     def apply_filter(self, image, file_path):
@@ -75,7 +75,7 @@ class CropPage(ImagePreprocessor):
         # Resize should be done with another preprocessor is needed
         sheet = self.find_page(image, file_path)
         if len(sheet) == 0:
-            if not self.should_fail_if_page_not_found:
+            if self.continue_on_page_not_found:
                 logger.warning(
                     f"\tPaper boundary not found for: '{file_path}'. "
                     "Continuing without cropping."

@@ -7,10 +7,12 @@ from src.processors.manager import PROCESSOR_MANAGER
 CropPage = PROCESSOR_MANAGER.processors["CropPage"]
 
 
-def make_croppage(should_fail_if_page_not_found=True):
+def make_croppage(continue_on_page_not_found=None):
     fake_ops = type("FakeImageInstanceOps", (), {})()
     fake_ops.tuning_config = DotMap(outputs=DotMap(show_image_level=0))
-    options = {"shouldFailIfPageNotFound": should_fail_if_page_not_found}
+    options = {}
+    if continue_on_page_not_found is not None:
+        options["continueOnPageNotFound"] = continue_on_page_not_found
     return CropPage(
         options=options,
         relative_dir=None,
@@ -29,8 +31,8 @@ def test_crop_page_fails_when_page_not_found_by_default():
     assert croppage.apply_filter(image, "test.png") is None
 
 
-def test_crop_page_returns_original_image_when_skip_requested():
-    croppage = make_croppage(should_fail_if_page_not_found=False)
+def test_crop_page_returns_original_image_when_continue_requested():
+    croppage = make_croppage(continue_on_page_not_found=True)
     image = random_image()
     output = croppage.apply_filter(image, "test.png")
     assert output is not None
@@ -40,19 +42,19 @@ def test_crop_page_returns_original_image_when_skip_requested():
 
 
 def test_crop_page_fallback_does_not_mutate_input():
-    croppage = make_croppage(should_fail_if_page_not_found=False)
+    croppage = make_croppage(continue_on_page_not_found=True)
     image = random_image()
     before = image.copy()
     croppage.apply_filter(image, "test.png")
     assert np.array_equal(image, before)
 
 
-def test_should_fail_if_page_not_found_defaults_to_true():
-    fake_ops = type("FakeImageInstanceOps", (), {})()
-    fake_ops.tuning_config = DotMap(outputs=DotMap(show_image_level=0))
-    croppage = CropPage(
-        options={},
-        relative_dir=None,
-        image_instance_ops=fake_ops,
-    )
-    assert croppage.should_fail_if_page_not_found is True
+def test_continue_on_page_not_found_defaults_to_false():
+    croppage = make_croppage()
+    assert croppage.continue_on_page_not_found is False
+
+
+def test_explicit_false_keeps_failing():
+    croppage = make_croppage(continue_on_page_not_found=False)
+    image = random_image()
+    assert croppage.apply_filter(image, "test.png") is None

@@ -174,7 +174,7 @@ TEMPLATE_SCHEMA = {
                                     "additionalProperties": False,
                                     "properties": {
                                         "morphKernel": two_positive_integers,
-                                        "shouldFailIfPageNotFound": {"type": "boolean"},
+                                        "continueOnPageNotFound": {"type": "boolean"},
                                     },
                                 }
                             }
