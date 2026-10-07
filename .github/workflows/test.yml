@@ -52,10 +52,13 @@ jobs:
           pytest-coverage-path: ./.github-pytest/pytest-coverage.txt
           junitxml-path: ./.github-pytest/pytest-output.xml
 
+      # tj-actions/coverage-badge-py runs `pip install -U setuptools`, and
+      # setuptools >= 81 no longer ships pkg_resources that coverage-badge
+      # imports - install a compatible pair into the project venv instead.
       - name: Coverage Badge
-        uses: tj-actions/coverage-badge-py@v2
-        with:
-          output: .github-pytest/coverage/coverage.svg
+        run: |
+          uv pip install --python .venv "setuptools<81" coverage-badge
+          uv run coverage-badge -f -o .github-pytest/coverage/coverage.svg
 
       # Only publish the badge from master - PRs must not overwrite it.
       - name: Publish coverage report to coverage-badge branch
